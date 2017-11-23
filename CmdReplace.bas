@@ -27,25 +27,31 @@ Dim in_buffer As String
 Dim out_buffer As String
 Dim f As Integer
 
-'Print "IN  :" & source_file
-'Print "OUT :" & target_file
-'Print "WHAT:" & replace_what
-'Print "WITH:" & replace_with
+'Print "IN  : [" & source_file & "]"
+'Print "OUT : [" & target_file & "]"
+'Print "WHAT: [" & replace_what & "]"
+
+Select Case replace_what
+	Case "\t": replace_what = Chr(9)
+	Case "\r": replace_what = Chr(13)
+	Case "\n": replace_what = Chr(10)
+End Select
+
+'Print "WHAT: [" & replace_what & "]"
+'Print "WITH: [" & replace_with & "]"
 'Print
 
 f = FreeFile
-Open source_file For Input As #f
-	Do Until Eof(f)
-		Line Input #f, in_buffer
-		
-		out_buffer = out_buffer & Replace(in_buffer, replace_what, replace_with) ' & Chr(13, 10)
-	Loop
+Open source_file For Binary As #f
+	in_buffer = Space(Lof(f))
+	Get #f,, in_buffer
+	out_buffer = Replace(in_buffer, replace_what, replace_with) ' & Chr(13, 10)
 Close #f
 
 If target_file <> "" Then
 	f = FreeFile
 	Open target_file For Output As #f
-		Print #f, out_buffer
+		Print #f, out_buffer;
 	Close #f
 Else
 	Print out_buffer
