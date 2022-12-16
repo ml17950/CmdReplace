@@ -11,7 +11,9 @@ Module=Module Build,fbc -c
 TabOrder=1
 [File]
 1=CmdReplace.bas
+2=CmdReplace.rc
 [BreakPoint]
 1=
 [FileInfo]
 1=0,37,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+2=0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
