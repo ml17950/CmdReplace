@@ -1,31 +1,98 @@
+Const APP_VERSION As String = "23.12.18"
 
-Function Replace(ByVal V_Data As String, ByVal V_Expression As String, ByVal V_ReplaceBy As String) As String
-	Dim X As Long
-	Dim SL As Long
-	Dim D As String
-	D = V_Data
-	SL = Len(V_Expression)
-	X = 0
+'##################################################################################
+' GLOBAL INCLUDES
+'##################################################################################
+
+' - none -
+
+'##################################################################################
+' GLOBAL VARIABLES
+'##################################################################################
+
+' - none -
+
+'##################################################################################
+' PROJECT INCLUDES
+'##################################################################################
+
+' - none -
+
+'##################################################################################
+' FUNCTIONS
+'##################################################################################
+
+Sub displayHelp()
+	Print
+	Print "CmdReplace - replace a string in text/data from a file - by M. Lindner / Version " & APP_VERSION
+	Print
+	Print "usage: CmdReplace <sourcefile> <search> <replace> [targetfile]"
+	Print
+	Print "Options"
+	Print "======================================================================="
+	Print " sourcefile       source file to read from"
+	Print " search           search for the string (\r,\n,\t possible)"
+	Print " replace          replace with this string"
+	Print " targetfile       target file to write to"
+	Print "                  if empty, print to stdout"
+End Sub
+
+Function replaceString(ByVal StrEx As String, _
+                    ByVal StrMask As String, _
+                    ByVal StrRplce As String, _
+                    ByVal FirstPos As UInteger=0, _
+                    ByVal LastPos As UInteger=0) As String
+
+	If Len(StrEx)=0 Or Len(StrMask)>Len(StrEx) Then Return StrEx
+	FirstPos = IIf (FirstPos=0, 1, FirstPos)
+	LastPos  = IIf (LastPos=0, Len(StrEx), LastPos)
+	LastPos  = IIf (LastPos>Len(StrEx), Len(StrEx), LastPos)
+
+	If FirstPos>Len(StrEx) Or FirstPos>LastPos Then Return StrEx
+
+	Dim Buffer As String=StrEx
+	Dim MaskSearch As UInteger
+	Dim MFound As Byte
+	Dim lp As UInteger=FirstPos
+
 	Do
-	    X = X + 1
-	    If X > Len(D) - SL + 1 Then Exit Do
-	    If Mid(D, X, SL) = V_Expression Then
-	        D = Mid(D, 1, X - 1) & V_ReplaceBy & Mid(D, X + SL)
-	        X = X + (SL  - 1)
-	        If X < 0 Then X = 0
-	    End If
-	Loop
-	Return D
+		MaskSearch=InStr(lp,Buffer,StrMask)
+		MFound=0
+
+		If MaskSearch And MaskSearch<LastPos+1 Then
+			MFound=1:lp=MaskSearch+Len(StrRplce)
+			Buffer=Left(Buffer,MaskSearch-1) + StrRplce + Right(Buffer,Len(Buffer)-(MaskSearch+(Len(StrMask)-1)))
+		End If
+	Loop While MFound=1
+
+	Return Buffer
 End Function
 
-Dim source_file As String = Command(1)
-Dim replace_what As String = Command(2)
-Dim replace_with As String = Command(3)
-Dim target_file As String = Command(4)
+'##################################################################################
+' MAIN PROG
+'##################################################################################
 
+Dim source_file As String
+Dim replace_what As String
+Dim replace_with As String
+Dim target_file As String
 Dim in_buffer As String
 Dim out_buffer As String
 Dim f As Integer
+
+'=======================================
+' Parameter
+'=======================================
+
+If __FB_ARGC__ < 3 Then
+	displayHelp()
+	End
+EndIf
+
+source_file  = Command(1)
+replace_what = Command(2)
+replace_with = Command(3)
+target_file  = Command(4)
 
 'Print "IN  : [" & source_file & "]"
 'Print "OUT : [" & target_file & "]"
@@ -41,13 +108,17 @@ End Select
 'Print "WITH: [" & replace_with & "]"
 'Print
 
+' Read source file
 f = FreeFile
 Open source_file For Binary As #f
 	in_buffer = Space(Lof(f))
 	Get #f,, in_buffer
-	out_buffer = Replace(in_buffer, replace_what, replace_with) ' & Chr(13, 10)
 Close #f
 
+' Replace data
+out_buffer = replaceString(in_buffer, replace_what, replace_with)
+
+' Write target file
 If target_file <> "" Then
 	f = FreeFile
 	Open target_file For Output As #f
